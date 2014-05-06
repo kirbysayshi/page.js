@@ -14,6 +14,18 @@
   var base = '';
 
   /**
+   * Path separator for URLs/URIs.
+   */
+
+  var separator = '/';
+
+  /**
+   * Character that delineates named parameters.
+   */
+
+  var delimiter = ':';
+
+  /**
    * Running flag.
    */
 
@@ -72,6 +84,30 @@
   page.base = function(path){
     if (0 == arguments.length) return base;
     base = path;
+  };
+
+  /**
+   * Get or set separator to `character`.
+   *
+   * @param {String} character
+   * @api public
+   */
+
+  page.separator = function(character){
+    if (0 == arguments.length) return separator;
+    separator = character;
+  };
+
+  /**
+   * Get or set delimiter to `character`.
+   *
+   * @param {String} character
+   * @api public
+   */
+
+  page.delimiter = function(character){
+    if (0 == arguments.length) return delimiter;
+    delimiter = character;
   };
 
   /**
@@ -344,21 +380,32 @@
   function pathtoRegexp(path, keys, sensitive, strict) {
     if (path instanceof RegExp) return path;
     if (path instanceof Array) path = '(' + path.join('|') + ')';
+
+    var reParser = new RegExp(''
+      + '(\\' + separator + ')?(\\.)?'
+      + delimiter
+      + '(\\w+)(?:(\\(.*?\\)))?(\\?)?'
+      , 'g');
+
     path = path
-      .concat(strict ? '' : '/?')
-      .replace(/\/\(/g, '(?:/')
-      .replace(/(\/)?(\.)?:(\w+)(?:(\(.*?\)))?(\?)?/g, function(_, slash, format, key, capture, optional){
+      .concat(strict ? '' : separator + '?')
+      .replace(new RegExp('\\\\' + separator + '\\(', 'g'), '(?:\\' + separator)
+      .replace(reParser, function(_, slash, format, key, capture, optional){
         keys.push({ name: key, optional: !! optional });
         slash = slash || '';
         return ''
           + (optional ? '' : slash)
           + '(?:'
           + (optional ? slash : '')
-          + (format || '') + (capture || (format && '([^/.]+?)' || '([^/]+?)')) + ')'
+          + (format || '')
+          + (capture
+            || (format && '([^' + separator + '.]+?)' || '([^' + separator + ']+?)'))
+          + ')'
           + (optional || '');
       })
-      .replace(/([\/.])/g, '\\$1')
+      .replace(new RegExp('([\\' + separator + '.])', 'g'), '\\$1')
       .replace(/\*/g, '(.*)');
+
     return new RegExp('^' + path + '$', sensitive ? '' : 'i');
   }
 

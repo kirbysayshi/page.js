@@ -131,6 +131,27 @@ describe('page', function(){
     })
   })
 
+  describe('not URLs', function() {
+    before(function() {
+      page.separator(':');
+      page.delimiter('@');
+    })
+
+    it('should populate ctx.params', function(done){
+      page(':blog:post:@name', function(ctx){
+        expect(ctx.params.name).to.equal('something');
+        done();
+      })
+
+      page(':blog:post:something');
+    })
+
+    after(function() {
+      page.separator('/');
+      page.delimiter(':');
+    })
+  })
+
   after(function(){
     page('/');
   })
